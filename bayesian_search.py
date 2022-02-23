@@ -20,7 +20,7 @@ models_to_average = 10 # keep this constant across tests
 
 # dataset and model type #
 dataset = datasets[1]  # Change the index to test different datasets.                                       # x 
-component = 2  # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)      # x
+component = 0  # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)      # x
 
 # hyperparameters #                                                                                         # x
 
@@ -34,14 +34,10 @@ def objective(trial):
     lr=trial.suggest_float('lr', 0.0001, 0.1)
     batch_size=64
     #seq_length=8#trial.suggest_int('seq_len', 4, 12)
-    
-    print("LEN INPUTS AHHHAHAHAHAHHA",len(inputs))
     dropout=trial.suggest_float('dropout', 0, 0.5)
     training_epochs=400
     # TCN only ↓
     kernel_size=trial.suggest_int('kernel', 2, 8)
-    #stuff = [n_layers, hidden_size, seq_length, dropout, kernel_size]
-    #stuff = [seq_length, hidden_size, dropout, kernel_size, n_layers]
 
     def create_DNN():
         
@@ -53,7 +49,6 @@ def objective(trial):
         #return LSTM(max(1,component), 2, hidden, 1, drop).to(dev)
         #return BiLSTM(max(1,component), 2, hidden, 1, drop).to(dev)
 
-    #model = create_DNN(seq_length, hidden_size, dropout, kernel_size, n_layers) # create a fresh model
     result = train_and_test(create_DNN, inputs, outputs, lr, batch_size, 8, training_epochs, component) # train and test it
 
     if component == 2:

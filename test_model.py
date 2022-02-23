@@ -25,10 +25,10 @@ hidden_size=64
 lr=0.001
 batch_size=64
 seq_length=6
-dropout=0.4
-training_epochs=300
+dropout=0.5
+training_epochs=200
 # TCN only ↓
-kernel_size=3
+kernel_size=5
 n_layers=3
 
 
