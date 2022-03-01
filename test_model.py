@@ -1,15 +1,15 @@
 from utils.dnn_methods import *
-from utils.polar_pla import preprocess
+from utils.polar_pla import preprocess, preprocess_from_pickle
 from models import *
 
 ''' This script should be used to test a configuration. Below are the datasets. 
         Fields which can be modified between tests are marked with an x.'''
-                        #---------------------# 
+                        #---------------------#   
                         # "DataSets/Name.csv" #  (This is what each of the fields mean below)
-                        #  Median Fiter Size  #      
-                        #    PLA Max Error    #          
+                        #  Median Fiter Size  #   
+                        #    PLA Max Error    #   
 
-datasets = [["DataSets/CTtemp.csv",5,6000],["DataSets/snp500.csv",10,10],["DataSets/hpc.csv",40,5000],["DataSets/dummy.csv",0,0.1], ["DataSets/AirPassengers.csv",0,0.1]]
+datasets = [["DataSets/CTtemp.csv",10,7000],["DataSets/JSE.csv",10,2],["DataSets/hpc.csv",40,5000],["DataSets/dummy.csv",0,0.1], ["DataSets/AirPassengers.csv",0,0.1], ["DataSets/JSE.csv",5,0]]
 
 models_to_average = 1 # keep this constant across tests
 
@@ -17,27 +17,27 @@ models_to_average = 1 # keep this constant across tests
 
 # dataset and model type #
 dataset = datasets[0]  # Change the index to test different datasets.                                       # x 
-component = 0  # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)      # x
+component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)      # x
 
 # hyperparameters #                                                                                         # x
 
-hidden_size=64
-lr=0.001
+hidden_size=84
+lr=0.0001
 batch_size=64
-seq_length=6
-dropout=0.5
-training_epochs=200
+seq_length=4
+dropout=0.1
+training_epochs=3000
 # TCN only ↓
-kernel_size=5
+kernel_size=3
 n_layers=3
 
+inputs, outputs = preprocess_from_pickle("DataSets/pc_data_voltage.pkl", seq_length, component)
+#inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component)
 
 # This system uses walk forward validation. Define your k here.
-k = 3
-train_ratio = 3 # : 1 : 1 <- ratio of train to validate to test. 
+k = 8
+train_ratio = 1 # : 1 : 1 <- ratio of train to validate to test. 
 
-
-inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component)
 
 # now just simply uncomment the model you'd like to test:
 

@@ -1,9 +1,11 @@
+from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 from numpy.lib.function_base import average
 from matplotlib.lines import Line2D
 from matplotlib.pylab import gca, figure, plot, subplot, title, xlabel, ylabel, xlim,show
+import random
 #import utils.segment as segment
 #import utils.fit as fit
 
@@ -28,6 +30,16 @@ def median_filter(time_series, filter_size):
     #plt.plot(result)
     #plt.show()
     return result
+
+def simple_moving_average(time_series, window_size):
+    moving_average = []
+    for i in range(len(time_series)):
+        if (i<window_size):
+            moving_average.append(sum(time_series[:i+1])/(i+1))
+        else: 
+            moving_average.append(sum(time_series[i+1-window_size:i+1])/window_size)
+    
+    return moving_average
 
 def sliding_window_pla(time_series, max_error):
 
@@ -271,10 +283,10 @@ def convert_trend_representation(trends, duration_scale):
         # find the slope in degrees
         slope = math.degrees(math.atan((trend[3]-trend[1])/(trend[2]-trend[0])))
         # now we need to normalize the angle to a value from -1 to 1
-        slope /= 90
+        #slope /= 90
         
         duration = trend[2]-trend[0]
-        duration /= duration_scale
+        #duration /= duration_scale
         
         #result.append([slope,duration])
         result.append([slope,duration])
@@ -295,12 +307,14 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
         time_series.append(float(line))
     
     if filter_size > 0:
-        time_series = median_filter(time_series, filter_size)
+        #time_series = median_filter(time_series, filter_size)
+        time_series = simple_moving_average(time_series, filter_size)
     
+    time_series_normalized = []
     # do minmax normalization on the time series 
-    #for i in range(len(time_series)):
-    #    time_series[i] = (time_series[i] - min(time_series))/(max(time_series)-min(time_series))
-    
+    for i in range(len(time_series)):
+        time_series_normalized.append((time_series[i] - min(time_series))/(max(time_series)-min(time_series)))
+    time_series_normalized = simple_moving_average(time_series_normalized, 5)
     # scale the minmax normalized by 100 so that there is a sufficiently large angle between trends
     #time_series = [x*5000 for x in time_series]
 
@@ -310,7 +324,7 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
         sliding_window_online(point, pls_max_error)
     
     finished_pla = trends
-    
+    print("TOTAL TRENDS: " + str(len(finished_pla)))
     values = [0,0,0,0,0,0,0,0] # E_x, E_y, E_xy, E_x2, E_y2, m, b, loss
     trends = []
     current_trend_index = -1
@@ -337,13 +351,21 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
 
     yuh = sliding_window_online(time_series[index], pls_max_error)
     index += 1
+    # forming of input output pairs
     while current_trend_index < len(finished_pla)-1:
-
-        inputs.append(convert_trend_representation(trends[current_trend_index-seq_length+1:current_trend_index+1], max_len))
+        max_len = 1
+        temp = convert_trend_representation(trends[current_trend_index-seq_length+1:current_trend_index+1], max_len)
+        
+        #for p in time_series_normalized[index-7:index+1]:
+        #    temp.append([p, 0])
+        
+        #[[s1, d1], [s2, d2], [s3, d3], [s4, d4], [s5, d5], [s6, d6], [s7, d7], [s8, d8]]
+        
+        inputs.append(temp)
         #temp = trends[current_trend_index-seq_length+1:current_trend_index]
         #temp.append(finished)
         #inputs.append(convert_trend_representation(, max_len))
-        
+
         current_trend = finished_pla[current_trend_index]
         next_trend = finished_pla[current_trend_index+1]
 
@@ -354,15 +376,17 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
 
 
         startX, startY, endX, endY = next_trend[0], next_trend[1], next_trend[2], next_trend[3]
-        next_trend_angle = math.degrees(math.atan((endY-startY)/(endX-startX)))/90
-        
+        next_trend_angle = math.degrees(math.atan((endY-startY)/(endX-startX)))#/90
+
         #outputs.append([next_trend_angle/90, remaining_duration/max_len])
         if component == 0:
+            #outputs.append([next_trend_angle])
             outputs.append([next_trend_angle])
         elif component == 1:
             outputs.append([remaining_duration/max_len])
         elif component == 2:
             outputs.append([next_trend_angle, remaining_duration/max_len])
+            
         yuh = sliding_window_online(time_series[index], pls_max_error)
         index += 1
     
@@ -381,40 +405,37 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
     #plt.ion()
     plt.show()
 
+    plt.show()
+
     return inputs, outputs
 
-def old_preprocess(file_name, filter_size, pls_max_error, seq_length):
+def preprocess_from_pickle(file_name, seq_length, component):
     '''
         Performs all data preprocessing steps and returns a processed trend series
     '''
-    # read in the time series
-    f = open(file_name, 'r')
-    time_series = []
-    for line in f:
-        time_series.append(float(line))
-    
-    # plot the time series in purple
-    plt.plot(time_series, color='orange')
-    plt.show()
+    import pickle
 
-    # apply median filter
-    time_series = median_filter(time_series, filter_size)
+    with open(file_name, 'rb') as f:
+        data = pickle.load(f)
 
-    # apply sliding window piecewise linear segmentation
-    x, _ = sliding_window_pla(time_series, pls_max_error)
+    trends = data.iloc[:,0:2].values
     inputs = []
     outputs = []
-    x = convert_trend_representation(x, 7)
-    for i in range(len(x)-seq_length):
-        for j in range(seq_length):
-            startX, startY, endX, endY = x[i+j][0], x[i+j][1], x[i+j][2], x[i+j][3]
-            inputs.append(x[i+j])
-        outputs.append(x[i+seq_length])
-    #print("----------------INPUTS----------------")
-    #print(inputs)
-    #print("----------------OUTPUTS----------------")
-    #print(outputs)
+    for i in range(seq_length, len(trends)-1):
+        inputs.append(trends[i-seq_length+1:i+1].tolist())
+        
+        if component == 0:
+            outputs.append([trends[i+1].tolist()[0]])
+        elif component == 1:
+            outputs.append([trends[i+1].tolist()[1]])
+        elif component == 2:
+            outputs.append(trends[i+1].tolist())
     return inputs, outputs
+    
+    
+    
+    
+    return 1#inputs, outputs
 
 if __name__ == "__main__":
     f = open('DataSets/CTtemp.csv')
