@@ -214,9 +214,7 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
                 elif pred < 0 and actual > 0: # false negative
                     fn += 1
 
-            model.zero_grad()
             total_loss_slope += F.mse_loss(output_slopes,pred_slopes).item()/len(testset)
-            model.zero_grad()
             total_loss_length += F.mse_loss(output_lengths, pred_lengths).item()/len(testset)
         # test for single model
         else:
@@ -267,7 +265,7 @@ def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, tr
     output[0] /= k
     
     
-    #if component == 2: output[1] /= k
+    if component == 2: output[1] /= k
     
     for i in range(1,k):
         print("\n------ Fold",i+1,"of",k,"------")

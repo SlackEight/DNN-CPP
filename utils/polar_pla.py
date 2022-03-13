@@ -168,7 +168,7 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
     index += 1
     # forming of input output pairs
     while current_trend_index < len(finished_pla)-1:
-        max_len = 1
+
         temp = convert_trend_representation(trends[current_trend_index-seq_length+1:current_trend_index+1])
         
         #for p in time_series_normalized[index-7:index+1]:
@@ -219,29 +219,6 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
     #plot the time series in purple
     #plt.ion()
     plt.show()
-
-    # min max norm the inputs and outputs
-    max_slope = 0
-    max_duration = 0
-       
-    for output in outputs:
-        if output[0] > max_slope:
-            max_slope = output[0]
-        if output[1] > max_duration:
-            max_duration = output[1]
-        
-    
-    for i in range(len(inputs)):
-        for j in range(len(inputs[i])):
-            inputs[i][j][0] /= max_slope
-            inputs[i][j][1] /= max_duration
-            inputs[i][j][0] *= 50
-            inputs[i][j][1] *= 50
-    
-    for i in range(len(outputs)):
-        outputs[i][0] = ((outputs[i][0])/(max_slope))*50
-        outputs[i][1] = ((outputs[i][1])/(max_duration))*50
-    
     
     return inputs, outputs
 
