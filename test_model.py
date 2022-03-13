@@ -28,7 +28,7 @@ lr=0.0001
 batch_size=64
 seq_length=6
 dropout=0.3
-training_epochs=500
+training_epochs=2000
 # TCN only ↓
 kernel_size=2
 n_layers=3
@@ -38,7 +38,7 @@ inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, com
 print(len(inputs))
 # This system uses walk forward validation. Define your k here.
 k = 4
-train_ratio = 6 # : 1 : 1 <- ratio of train to validate to test. 
+train_ratio = 4 # : 1 : 1 <- ratio of train to validate to test. 
 
 
 # now just simply uncomment the model you'd like to test:
