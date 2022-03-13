@@ -13,22 +13,22 @@ datasets = [["DataSets/CTtemp.csv",10,6000],["DataSets/snp500.csv",5,10],["DataS
 
 # dataset 1 gets about 100% accuracy with 500 epochs [10, 6000]
 
-models_to_average = 1 # keep this constant across tests
+models_to_average = 5 # keep this constant across tests
 
         #--------- your test goes here, modifiable attributes are labelled with an x ---------#
 
 # dataset and model type #
-dataset = datasets[1]  # Change the index to test different datasets.                                       # x 
+dataset = datasets[0]  # Change the index to test different datasets.                                       # x 
 component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)       # x
 
 # hyperparameters #                                                                                         # x
 
-hidden_size=64
+hidden_size=84
 lr=0.0001
 batch_size=64
-seq_length=4
+seq_length=6
 dropout=0.3
-training_epochs=10
+training_epochs=1000
 # TCN only ↓
 kernel_size=2
 n_layers=3
@@ -38,7 +38,7 @@ inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, com
 print(len(inputs))
 # This system uses walk forward validation. Define your k here.
 k = 4
-train_ratio = 8 # : 1 : 1 <- ratio of train to validate to test. 
+train_ratio = 6 # : 1 : 1 <- ratio of train to validate to test. 
 
 
 # now just simply uncomment the model you'd like to test:
@@ -46,11 +46,11 @@ train_ratio = 8 # : 1 : 1 <- ratio of train to validate to test.
 def create_DNN():                                                                                           # x
     #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
     #return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
-    #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
+    return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
     #return LSTM(seq_length, hidden_size, max(1,component), dropout).to(dev)
     #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
-    return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
+    #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
 
 outputfile = "" # if this is empty it will just print instead
 

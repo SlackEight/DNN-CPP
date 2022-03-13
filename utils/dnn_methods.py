@@ -130,7 +130,7 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
             loss = F.mse_loss(output, labels)  # calculate the loss of our prediction
             epoch_validationloss += loss.item()/len(validateset)
         if epoch_validationloss < min_val_loss:
-            torch.save(model, 'temp.pt')
+            if epoch != 0: torch.save(model, 'temp.pt')
             min_val_loss = epoch_validationloss
             min_val_loss_epoch = epoch
         validation_direction_accuracy.append(correct/(total_points))
@@ -148,7 +148,7 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
     #plt.legend()
     print(f"Lowest validation loss: {min_val_loss} at epoch {min_val_loss_epoch}")
 
-    if min_val_loss_epoch != 0: model = torch.load('temp.pt')
+    model = torch.load('temp.pt')
 
     model.eval()
     correct=0
