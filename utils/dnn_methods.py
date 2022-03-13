@@ -69,9 +69,9 @@ def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, comp
     validate = torch.utils.data.TensorDataset(validation_input, validation_output)
     test = torch.utils.data.TensorDataset(testing_input, testing_output)
 
-    trainset = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False, num_workers=2)
-    validateset = torch.utils.data.DataLoader(validate, batch_size=batch_size, shuffle=False, num_workers=2)
-    testset = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False, num_workers=2)
+    trainset = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False)
+    validateset = torch.utils.data.DataLoader(validate, batch_size=batch_size, shuffle=False)
+    testset = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False)
 
     return trainset, validateset, testset
 
