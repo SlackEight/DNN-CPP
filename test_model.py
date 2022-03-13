@@ -28,7 +28,7 @@ lr=0.001
 batch_size=64
 seq_length=6
 dropout=0.0
-training_epochs=600
+training_epochs=2000
 # TCN only ↓
 kernel_size=2
 n_layers=3
@@ -45,10 +45,10 @@ train_ratio = 4 # : 1 : 1 <- ratio of train to validate to test.
 
 def create_DNN():                                                                                           # x
     #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
-    #return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
+    return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
     #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
     #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
-    return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
+    #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
 
 outputfile = "" # if this is empty it will just print instead
