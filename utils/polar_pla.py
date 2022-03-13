@@ -89,7 +89,7 @@ def sliding_window_online(point, max_error):
     output = trends
     return output
 
-def convert_trend_representation(trends):
+def convert_trend_representation(trends, max_len):
     '''
         Takes a list of trends where each trend is in the form [startX, startY, endX, endY]
         Returns a list where each trend is represented as [slope, duration]
@@ -101,10 +101,10 @@ def convert_trend_representation(trends):
         #slope = (trend[3]-trend[1])/(trend[2]-trend[0])
         
         # now we need to normalize the angle to a value from -1 to 1
-        #slope /= 90
+        slope /= 90
         
         duration = trend[2]-trend[0]
-        
+        duration /= max_len
         #result.append([slope,duration])
         result.append([slope,duration])
     return result
@@ -169,7 +169,7 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
     # forming of input output pairs
     while current_trend_index < len(finished_pla)-1:
 
-        temp = convert_trend_representation(trends[current_trend_index-seq_length+1:current_trend_index+1])
+        temp = convert_trend_representation(trends[current_trend_index-seq_length+1:current_trend_index+1], max_len)
         
         #for p in time_series_normalized[index-7:index+1]:
         #    temp.append([p, 0])
@@ -191,16 +191,16 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
 
 
         startX, startY, endX, endY = next_trend[0], next_trend[1], next_trend[2], next_trend[3]
-        next_trend_angle = math.degrees(math.atan((endY-startY)/(endX-startX)))#/90
+        next_trend_angle = math.degrees(math.atan((endY-startY)/(endX-startX)))/90
 
         #outputs.append([next_trend_angle/90, remaining_duration/max_len])
         if component == 0:
             #outputs.append([next_trend_angle])
             outputs.append([next_trend_angle])
         elif component == 1:
-            outputs.append([remaining_duration])
+            outputs.append([remaining_duration/max_len])
         elif component == 2:
-            outputs.append([next_trend_angle, remaining_duration])
+            outputs.append([next_trend_angle, remaining_duration/max_len])
             
         yuh = sliding_window_online(time_series[index], pls_max_error)
         index += 1

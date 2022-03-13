@@ -27,10 +27,10 @@ def unfold_inputs_and_outputs_MLP(inputs, outputs):
                 temp.append(p[1])
         inp.append(temp)
 
-    return torch.Tensor(np.array(inp)).to(dev), torch.Tensor(np.array(outputs)).to(dev).to(dev)
+    return torch.Tensor(np.array(inp)).to(dev), torch.Tensor(np.array(outputs)).to(dev)
 
 def tensor_dataset(inputs, outputs):
-    return torch.Tensor(np.array(inputs)).to(dev), torch.Tensor(np.array(outputs)).to(dev).to(dev)
+    return torch.Tensor(np.array(inputs)).to(dev), torch.Tensor(np.array(outputs)).to(dev)
 
 def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, component, k, index, train_ratio):
     # k fold walk forward validation with overlapping windows
@@ -69,13 +69,14 @@ def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, comp
     validate = torch.utils.data.TensorDataset(validation_input, validation_output)
     test = torch.utils.data.TensorDataset(testing_input, testing_output)
 
-    trainset = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False)
-    validateset = torch.utils.data.DataLoader(validate, batch_size=batch_size, shuffle=False)
-    testset = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False)
+    trainset = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False, num_workers=2)
+    validateset = torch.utils.data.DataLoader(validate, batch_size=batch_size, shuffle=False, num_workers=2)
+    testset = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False, num_workers=2)
 
     return trainset, validateset, testset
 
 def test_model(model, trainset, validateset, testset, learning_rate, component, training_epochs, current_fold):
+    model.to(dev)
     tp = 0
     fp = 0
     tn = 0
@@ -97,6 +98,10 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
         
         for data in trainset:  # for each batch in the train set
             features, labels = data  # split the batches up into their features and labels
+            
+            features = features.to(dev)
+            labels = labels.to(dev)
+            
             model.zero_grad()
             output = model(features) # get a prediction from the model
             tot += len(features)
@@ -117,6 +122,9 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
         for data in validateset:
             
             inputs, labels = data
+            inputs = inputs.to(dev)
+            labels = labels.to(dev)
+            
             output = model(inputs)
             total_points += len(output)
             for i in range(len(output)):
@@ -149,6 +157,7 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
     print(f"Lowest validation loss: {min_val_loss} at epoch {min_val_loss_epoch}")
 
     model = torch.load('temp.pt')
+    model.to(dev)
 
     model.eval()
     correct=0
