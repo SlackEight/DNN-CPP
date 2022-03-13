@@ -97,8 +97,8 @@ def convert_trend_representation(trends):
     result = []
     for trend in trends:
         # find the slope in degrees
-        slope = math.degrees(math.atan((trend[3]*500-trend[1]*500)/(trend[2]-trend[0])))
-        slope = (trend[3]-trend[1])/(trend[2]-trend[0])
+        slope = math.degrees(math.atan((trend[3]-trend[1])/(trend[2]-trend[0])))
+        #slope = (trend[3]-trend[1])/(trend[2]-trend[0])
         
         # now we need to normalize the angle to a value from -1 to 1
         #slope /= 90
@@ -191,8 +191,7 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
 
 
         startX, startY, endX, endY = next_trend[0], next_trend[1], next_trend[2], next_trend[3]
-        next_trend_angle = math.degrees(math.atan((endY*500-startY*500)/(endX-startX)))#/90
-        next_trend_angle = (endY-startY)/(endX-startX)
+        next_trend_angle = math.degrees(math.atan((endY-startY)/(endX-startX)))#/90
 
         #outputs.append([next_trend_angle/90, remaining_duration/max_len])
         if component == 0:

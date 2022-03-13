@@ -13,7 +13,7 @@ datasets = [["DataSets/CTtemp.csv",10,6000],["DataSets/snp500.csv",5,10],["DataS
 
 # dataset 1 gets about 100% accuracy with 500 epochs [10, 6000]
 
-models_to_average = 5 # keep this constant across tests
+models_to_average = 3 # keep this constant across tests
 
         #--------- your test goes here, modifiable attributes are labelled with an x ---------#
 
@@ -45,8 +45,8 @@ train_ratio = 6 # : 1 : 1 <- ratio of train to validate to test.
 
 def create_DNN():                                                                                           # x
     #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
-    #return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
-    return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
+    return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
+    #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
     #return LSTM(seq_length, hidden_size, max(1,component), dropout).to(dev)
     #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
