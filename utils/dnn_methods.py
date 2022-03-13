@@ -178,7 +178,7 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
     #print(f'Directional Accuracy: {correct*100/len(test)} MSE on validate set: {total_loss}')
     '''
     if validation:
-        return min_val_loss
+        return [min_val_loss,0]
     total_loss = 0
     total_loss_slope = 0
     total_loss_length = 0
@@ -271,7 +271,7 @@ def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, tr
     print("\nTrainset length (batches):", len(trainset))
     print("Validationset length (batches):", len(validationset))
     print("Testset length (batches):", len(testset),"\n")
-    output = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, 0, validation=validation)
+    output = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, 0, validation)
 
     output[0] /= k
     
@@ -282,7 +282,7 @@ def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, tr
         print("\n------ Fold",i+1,"of",k,"------")
         trainset, validationset, testset = dataload_walkforward(s_window ,batch_size, inputs, outputs, seq_length, component, k, i, train_ratio)
         model = torch.load('temp.pt')
-        res1 = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, i)
+        res1 = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, i, validation)
         if component == 2:
             output[0] += res1[0]/k
             output[1] += res1[1]/k

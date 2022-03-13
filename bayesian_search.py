@@ -67,19 +67,19 @@ def objective(trial):
     
     def create_DNN():                                                                                           # x
         #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
-        return CNN(seq_length, hidden_size, max(1,component), kernel_size, dropout).to(dev)
-        #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
+        #return CNN(seq_length, hidden_size, max(1,component), kernel_size, dropout).to(dev)
+        return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
         #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
         #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
         #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
         #return TreNet(max(1,component), 2, hidden_size, 1, dropout, seq_length).to(dev)
-    return train_and_test(create_DNN, inputs, outputs, lr, 64, seq_length, training_epochs, component, k, train_ratio, validation=True) # train and test it
+    return train_and_test(create_DNN, inputs, outputs, lr, 64, seq_length, training_epochs, component, k, train_ratio, validation=True)[0] # train and test it
 
 import time
 start_Time = time.time()
 study = optuna.create_study()
-study.optimize(objective, n_trials=5)
+study.optimize(objective, n_trials=50)
 output = open('optuna_results.txt', 'w')
-output.write(study.best_params)
+output.write(str(study.best_params))
 os.remove("temp.pt")
 print("Time taken: ", time.time() - start_Time)

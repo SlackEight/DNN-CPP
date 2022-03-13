@@ -99,7 +99,6 @@ class BiLSTM(nn.Module):
             m.bias.data.fill_(0.01)
 
     def forward(self, x):
-        print("-------------------------- EX -------", x)
         h_0 = Variable(torch.zeros(
             self.num_layers * 2, x.size(0), self.hidden_size))
         c_0 = Variable(torch.zeros(

@@ -116,6 +116,9 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component, tre
     global trends
     global current_trend_index
     global values
+    values = [0,0,0,0,0,0,0,0] # E_x, E_y, E_xy, E_x2, E_y2, m, b, loss
+    trends = []
+    current_trend_index = -1
     
     # read in the time series
     f = open(file_name, 'r')
