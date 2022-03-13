@@ -1,7 +1,6 @@
 from numpy.core.shape_base import block
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import numpy as np
 import models
@@ -17,50 +16,21 @@ if torch.cuda.is_available():
 else:
     dev = torch.device("cpu")
 
-def sliding_window_MLP(inputs, outputs, seq_length, component):
+def unfold_inputs_and_outputs_MLP(inputs, outputs):
+    # unfold the inputs and outputs so that slope and duration aren't in a list together (basically get rid of channels)
+    inp = []
+    for sequence in inputs:
+        temp = []
+        for p in sequence:
+            temp.append(p[0])
+            if p[1] != 0:
+                temp.append(p[1])
+        inp.append(temp)
 
-    return Variable(torch.FloatTensor(np.array(inputs)).to(dev)), Variable(torch.FloatTensor(np.array(outputs)).to(dev))
+    return torch.Tensor(np.array(inp)).to(dev), torch.Tensor(np.array(outputs)).to(dev).to(dev)
 
-def sliding_window_CNN(inputs, outputs, seq_length, component):
-
-    return Variable(torch.FloatTensor(np.array(inputs)).to(dev)), Variable(torch.FloatTensor(np.array(outputs)).to(dev))
-
-def sliding_window_RNN(data, seq_length, component, k=1):
-    k = len(data)//k
-    seq_length *= 2
-    inputs = []
-    outputs = []
-    for i in range(0, len(data)-seq_length, 2):
-        inputs.append(np.array(data[i:(i+seq_length)]).reshape(int(seq_length/2),2).to(dev))
-        outputs.append(np.array(data[i+seq_length+component%2:i+seq_length+min(component+1,2)]).to(dev))
-    return Variable(torch.FloatTensor(inputs).to(dev)), Variable(torch.FloatTensor(outputs).to(dev))
-
-def dataload(window_func ,batch_size, inputs, outputs, seq_len, train_proportion, component):
-
-    # convert data to tensor, and apply dataloader
-    total_data_input, total_data_output = window_func(inputs, outputs, seq_len, component)
-    train_size = int(len(total_data_input)*train_proportion)
-
-    training_data_input = torch.narrow(total_data_input, 0, 0, train_size)
-    training_data_output = torch.narrow(total_data_output, 0, 0, train_size)
-
-    validation_index = int((len(total_data_input) - train_size)*0.5) #Calculates how many data points in the validation set
-    testing_index = len(total_data_input) - train_size - validation_index
-
-    validation_data_input = torch.narrow(total_data_input, 0, train_size, validation_index).to(dev)
-    validation_data_output = torch.narrow(total_data_output, 0, train_size, validation_index).to(dev)
-
-    testing_data_input = torch.narrow(total_data_input, 0, train_size+validation_index, testing_index).to(dev)
-    testing_data_output = torch.narrow(total_data_output, 0, train_size+validation_index, testing_index).to(dev)
-
-    train = torch.utils.data.TensorDataset(training_data_input, training_data_output)
-    validate = torch.utils.data.TensorDataset(validation_data_input, validation_data_output)
-    test = torch.utils.data.TensorDataset(testing_data_input, testing_data_output)
-
-    trainset = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False)
-    validateset = torch.utils.data.DataLoader(validate, batch_size=batch_size, shuffle=False)
-    testset = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False)
-    return trainset, validateset, testset
+def tensor_dataset(inputs, outputs):
+    return torch.Tensor(np.array(inputs)).to(dev), torch.Tensor(np.array(outputs)).to(dev).to(dev)
 
 def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, component, k, index, train_ratio):
     # k fold walk forward validation with overlapping windows
@@ -72,7 +42,7 @@ def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, comp
     print("----- WF VALIDATION INFO -------")
     print()
     print()
-    fold_inputs, fold_outputs = window_func(inputs, outputs, seq_len, component)
+    fold_inputs, fold_outputs = window_func(inputs, outputs)
     print("fold inputs len", len(fold_inputs))
     train_blocks = train_ratio # and 1 for validate and one for test. Just change this to change the ratio
     blocks_in_dataset = (train_blocks + 2) + (k-1)
@@ -212,25 +182,25 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
             for out in labels:
                 output_slopes.append(np.array([out[0].cpu().detach().numpy()]))
                 tot += 1
-            output_slopes = Variable(torch.Tensor(output_slopes)).to(dev)
+            output_slopes = torch.Tensor(output_slopes).to(dev)
 
             output_lengths = []
             for out in labels:
                 output_lengths.append(np.array([out[1].cpu().detach().numpy()]))
-            output_lengths = Variable(torch.Tensor(output_lengths)).to(dev)
+            output_lengths = torch.Tensor(output_lengths).to(dev)
 
             pred_slopes = []
             for out in output:
                 pred_slopes.append(np.array([out[0].cpu().detach().numpy()]))
                 #pred_slopes.append(np.array([5]))
-            pred_slopes = Variable(torch.Tensor(pred_slopes)).to(dev)
+            pred_slopes = torch.Tensor(pred_slopes).to(dev)
 
             pred_lengths = []
             for out in output:
                 pred_lengths.append(np.array([out[1].cpu().detach().numpy()]))
                 #print(out[1].cpu().detach().numpy(),"vs", 2, "vs", output_lengths[-1])
                 #pred_lengths.append(np.array([2]))
-            pred_lengths = Variable(torch.Tensor(pred_lengths)).to(dev)
+            pred_lengths = torch.Tensor(pred_lengths).to(dev)
         
             for i in range(len(output_slopes)): # true and false directional classifications
                 pred = pred_slopes[i][0]
@@ -281,12 +251,12 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
 def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, training_epochs, component, k, train_ratio):
     
     model = create_model()
-    s_window = sliding_window_MLP
+    s_window = unfold_inputs_and_outputs_MLP
 
     if isinstance(model, models.CNN) or isinstance(model, models.TCN):
-        s_window = sliding_window_CNN
+        s_window = tensor_dataset
     elif isinstance(model, models.RNN) or isinstance(model, models.LSTM) or isinstance(model, models.BiLSTM):
-        s_window = sliding_window_RNN
+        s_window = tensor_dataset
     print("------ Fold 1 of",k,"------")
     trainset, validationset, testset = dataload_walkforward(s_window ,batch_size, inputs, outputs, seq_length, component, k, 0, train_ratio)
     print("\nTrainset length (batches):", len(trainset))

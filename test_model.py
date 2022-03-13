@@ -9,34 +9,36 @@ from models import *
                         #  Median Fiter Size  #   
                         #    PLA Max Error    #   
 
-datasets = [["DataSets/CTtemp.csv",10,7000],["DataSets/JSE.csv",10,2],["DataSets/hpc.csv",40,5000],["DataSets/dummy.csv",0,0.1], ["DataSets/AirPassengers.csv",0,0.1], ["DataSets/JSE.csv",5,0]]
+datasets = [["DataSets/CTtemp.csv",10,6000],["DataSets/snp500.csv",5,10],["DataSets/power_hour.csv",4,0.5],["DataSets/chaotic_functions1.txt",0,0.00000005], ["DataSets/AirPassengers.csv",0,0.1], ["DataSets/JSE.csv",5,0]]
+
+# dataset 1 gets about 100% accuracy with 500 epochs [10, 6000]
 
 models_to_average = 1 # keep this constant across tests
 
         #--------- your test goes here, modifiable attributes are labelled with an x ---------#
 
 # dataset and model type #
-dataset = datasets[0]  # Change the index to test different datasets.                                       # x 
-component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)      # x
+dataset = datasets[1]  # Change the index to test different datasets.                                       # x 
+component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)       # x
 
 # hyperparameters #                                                                                         # x
 
-hidden_size=84
+hidden_size=64
 lr=0.0001
 batch_size=64
 seq_length=4
-dropout=0.1
-training_epochs=3000
+dropout=0.3
+training_epochs=10
 # TCN only ↓
-kernel_size=3
+kernel_size=2
 n_layers=3
 
-inputs, outputs = preprocess_from_pickle("DataSets/pc_data_voltage.pkl", seq_length, component)
-#inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component)
-
+#inputs, outputs = preprocess_from_pickle("DataSets/jse.pkl", seq_length, component)
+inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component)
+print(len(inputs))
 # This system uses walk forward validation. Define your k here.
-k = 8
-train_ratio = 1 # : 1 : 1 <- ratio of train to validate to test. 
+k = 4
+train_ratio = 8 # : 1 : 1 <- ratio of train to validate to test. 
 
 
 # now just simply uncomment the model you'd like to test:
@@ -44,11 +46,11 @@ train_ratio = 1 # : 1 : 1 <- ratio of train to validate to test.
 def create_DNN():                                                                                           # x
     #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
     #return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
-    return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
+    #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
     #return LSTM(seq_length, hidden_size, max(1,component), dropout).to(dev)
     #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
-    #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
+    return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
 
 outputfile = "" # if this is empty it will just print instead
 

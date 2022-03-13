@@ -2,7 +2,7 @@ from utils.polar_pla import median_filter, sliding_window_online
 
 # starting parameters:
 time_series_filename = 'DataSets/CTtemp.csv'
-max_error = 6000
+max_error = 5900
 
 dataset = []
 f = open(time_series_filename, 'r')
@@ -26,9 +26,12 @@ def animate(i):
     xs = []
     ys = []
     ax1.clear()
-    plt.plot(dataset[0:i])
+    plt.plot(dataset[0:i], color='orange', alpha=1, linewidth=4)
     for t in trends:
-        plt.plot([t[0],t[2]],[t[1],t[3]], color='orange', linewidth=3)
+        plt.plot([t[0],t[2]],[t[1],t[3]], color='magenta', linewidth=3)
+    
+    for t in trends:
+        plt.plot([t[0],t[2]],[t[1],t[3]])
     
     #ax1.plot([trends[i][0],trends[i][2]], [trends[i][1],trends[i][3]], color='magenta', linewidth=5, alpha=0.5)
     #ax1.set_xlim([0, trends[-1][2]])
