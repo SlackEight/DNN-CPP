@@ -175,7 +175,7 @@ class TCN(nn.Module):
             m.bias.data.fill_(0.01)
 
     def forward(self, x):
-        x = torch.swapaxes(x, 1, 2)
+        #x = torch.swapaxes(x, 1, 2)
         y1 = torch.relu(self.tcn(x))
         
         return self.linear(y1[:, :, -1])
