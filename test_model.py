@@ -26,30 +26,34 @@ component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach
 hidden_size=84
 lr=0.001
 batch_size=64
-seq_length=6
+seq_length=5
 dropout=0.0
-training_epochs=2000
+training_epochs=3000
 # TCN only ↓
-kernel_size=2
+kernel_size=3
 n_layers=3
 
 #inputs, outputs = preprocess_from_pickle("DataSets/jse.pkl", seq_length, component)
-inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component)
-print(len(inputs))
-# This system uses walk forward validation. Define your k here.
-k = 4
-train_ratio = 4 # : 1 : 1 <- ratio of train to validate to test. 
+
 
 
 # now just simply uncomment the model you'd like to test:
 
 def create_DNN():                                                                                           # x
     #return MLP(seq_length*2, hidden_size, max(1,component), dropout).to(dev)
-    return CNN(seq_length, hidden_size, max(1,component), 2, dropout).to(dev)
+    return CNN(seq_length, hidden_size, max(1,component), kernel_size, dropout).to(dev)
     #return TCN(seq_length,max(1, component), [hidden_size]*n_layers, kernel_size, dropout).to(dev)
     #return RNN(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
     #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
+    #return TreNet(max(1,component), 2, hidden_size, 1, dropout, seq_length).to(dev)
+
+inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component, trenet=False)
+print(len(inputs))
+print("inputsssss",inputs[:10])
+# This system uses walk forward validation. Define your k here.
+k = 4
+train_ratio = 4 # : 1 : 1 <- ratio of train to validate to test. 
 
 outputfile = "" # if this is empty it will just print instead
 

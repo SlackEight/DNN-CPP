@@ -109,7 +109,7 @@ def convert_trend_representation(trends, max_len):
         result.append([slope,duration])
     return result
 
-def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
+def preprocess(file_name, filter_size, pls_max_error, seq_length, component, trenet=False):
     '''
         Performs all data preprocessing steps and returns a processed trend series
     '''
@@ -183,6 +183,10 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
 
         current_trend = finished_pla[current_trend_index]
         next_trend = finished_pla[current_trend_index+1]
+        
+        if trenet:
+            for p in time_series_normalized[next_trend[0]-seq_length+1:next_trend[0]+1]:
+                temp.append([p, 1])
 
         current_trend_duration = current_trend[2]-current_trend[0]
         online_trend_duration = trends[-1][2]-trends[-1][0]
@@ -218,7 +222,7 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component):
         plt.plot([t[0],t[2]],[t[1],t[3]])
     #plot the time series in purple
     #plt.ion()
-    plt.show()
+    #plt.show()
     
     return inputs, outputs
 

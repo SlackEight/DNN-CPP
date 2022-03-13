@@ -75,7 +75,7 @@ def dataload_walkforward(window_func ,batch_size, inputs, outputs, seq_len, comp
 
     return trainset, validateset, testset
 
-def test_model(model, trainset, validateset, testset, learning_rate, component, training_epochs, current_fold):
+def test_model(model, trainset, validateset, testset, learning_rate, component, training_epochs, current_fold, validation):
     model.to(dev)
     tp = 0
     fp = 0
@@ -177,6 +177,8 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
         total_loss += F.mse_loss(output, labels).item()/len(validateset)
     #print(f'Directional Accuracy: {correct*100/len(test)} MSE on validate set: {total_loss}')
     '''
+    if validation:
+        return min_val_loss
     total_loss = 0
     total_loss_slope = 0
     total_loss_length = 0
@@ -255,12 +257,12 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
 
 
 
-def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, training_epochs, component, k, train_ratio):
+def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, training_epochs, component, k, train_ratio, validation=False):
     
     model = create_model()
     s_window = unfold_inputs_and_outputs_MLP
 
-    if isinstance(model, models.CNN) or isinstance(model, models.TCN):
+    if isinstance(model, models.CNN) or isinstance(model, models.TCN) or isinstance(model, models.TreNet):
         s_window = tensor_dataset
     elif isinstance(model, models.RNN) or isinstance(model, models.LSTM) or isinstance(model, models.BiLSTM):
         s_window = tensor_dataset
@@ -269,7 +271,7 @@ def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, tr
     print("\nTrainset length (batches):", len(trainset))
     print("Validationset length (batches):", len(validationset))
     print("Testset length (batches):", len(testset),"\n")
-    output = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, 0)
+    output = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, 0, validation=validation)
 
     output[0] /= k
     
