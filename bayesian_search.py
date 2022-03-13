@@ -50,7 +50,7 @@ fn = 0 # false negatives
 def objective(trial):
     
     
-    #n_layers = trial.suggest_int('n_layers', 2, 4)
+    n_layers = trial.suggest_int('n_layers', 2, 4)
     hidden_size = trial.suggest_int('hidden_size', 32, 128)
     lr=trial.suggest_float('lr', 0.0001, 0.05)
     seq_length=trial.suggest_int('seq_len', 6, 10)
