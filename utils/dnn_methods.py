@@ -127,14 +127,6 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
             
             output = model(inputs)
             total_points += len(output)
-            for i in range(len(output)):
-                pred = output[i]
-                actual = labels[i]
-                if pred[0] < 0 and actual[0] < 0 or pred[0] > 0 and actual[0] > 0: #or (pred-actual)<0.01:
-                    correct += 1
-                #print(output[0],labels[0])
-                #if epoch % 20 == 0 and i == 0:
-                #    print("Prediction:",pred,"Actual:",actual)
             loss = F.mse_loss(output, labels)  # calculate the loss of our prediction
             epoch_validationloss += loss.item()/len(validateset)
         if epoch_validationloss < min_val_loss:
@@ -155,8 +147,10 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
     #plt.plot(validation_direction_accuracy, label = "Directional Accuracy for fold "+str(current_fold+1))
     #plt.legend()
     print(f"Lowest validation loss: {min_val_loss} at epoch {min_val_loss_epoch}")
-
-    model = torch.load('temp.pt')
+    try:
+        model = torch.load('temp.pt')
+    except:
+        print("no model file, skipping")
     model.to(dev)
 
     model.eval()
@@ -208,14 +202,21 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
 
             pred_lengths = []
             for out in output:
-                pred_lengths.append(np.array([out[1].cpu().detach().numpy()]))
+                #print("---")
+                #print(out[-2][1].cpu().detach().numpy())
+                #print(out[-1][1].cpu().detach().numpy())
+                #print("---")
+                #naive_rem_len = out[-2][1]-out[-1][1]
+                #pred_lengths.append(np.array([naive_rem_len.cpu().detach().numpy()]))
                 #print(out[1].cpu().detach().numpy(),"vs", 2, "vs", output_lengths[-1])
+                pred_lengths.append(np.array([out[1].cpu().detach().numpy()]))
                 #pred_lengths.append(np.array([2]))
             pred_lengths = torch.Tensor(pred_lengths).to(dev)
         
             for i in range(len(output_slopes)): # true and false directional classifications
                 pred = pred_slopes[i][0]
                 actual = labels[i][0]
+
                 if pred > 0 and actual > 0 or 0<(abs(pred)-abs(actual))<0.022: # true positive with 2 degree lee way
                     tp += 1
                 elif pred < 0 and actual < 0: # true negative
@@ -224,7 +225,12 @@ def test_model(model, trainset, validateset, testset, learning_rate, component, 
                     fp += 1
                 elif pred < 0 and actual > 0: # false negative
                     fn += 1
-
+            for i in range(len(output_lengths)): # true and false directional classifications
+                pred = pred_lengths[i][0]
+                actual = labels[i][1]
+                
+                
+                #print("PRED VS ACTUAL: ", pred, actual)
             total_loss_slope += F.mse_loss(output_slopes,pred_slopes).item()/len(testset)
             total_loss_length += F.mse_loss(output_lengths, pred_lengths).item()/len(testset)
         # test for single model
@@ -281,7 +287,11 @@ def train_and_test(create_model, inputs, outputs, lr, batch_size, seq_length, tr
     for i in range(1,k):
         print("\n------ Fold",i+1,"of",k,"------")
         trainset, validationset, testset = dataload_walkforward(s_window ,batch_size, inputs, outputs, seq_length, component, k, i, train_ratio)
-        model = torch.load('temp.pt')
+        try:
+            model = torch.load('temp.pt')
+        except:
+            print("Model file not found, using fresh model")
+            model = create_model()
         res1 = test_model(model, trainset, validationset, testset, lr, component, training_epochs//k, i, validation)
         if component == 2:
             output[0] += res1[0]/k

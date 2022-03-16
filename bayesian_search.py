@@ -10,7 +10,7 @@ import optuna
                         #  Median Fiter Size  #   
                         #    PLA Max Error    #   
 
-datasets = [["DataSets/CTtemp.csv",10,6000],["DataSets/snp500.csv",10,10],["DataSets/power_hour.csv",4,0.5],["DataSets/chaotic_functions1.txt",0,0.00000005], ["DataSets/AirPassengers.csv",0,0.1], ["DataSets/JSE.csv",5,0]]
+datasets = [["DataSets/CTtemp.csv",10,6000],["DataSets/snp500.csv",10,10],["DataSets/Power_hour.csv",4,0.5],["DataSets/N225P.csv",10,10], ["DataSets/AirPassengers.csv",0,0.1], ["DataSets/JSE.csv",5,0]]
 
 # dataset 1 gets about 100% accuracy with 500 epochs [10, 6000]
 
@@ -19,7 +19,7 @@ models_to_average = 1 # keep this constant across tests
         #--------- your test goes here, modifiable attributes are labelled with an x ---------#
 
 # dataset and model type #
-dataset = datasets[1]  # Change the index to test different datasets.                                       # x 
+dataset = datasets[2]  # Change the index to test different datasets.                                       # x 
 component = 2 # 0 to predict trend, 1 to predict duration, 2 for a dual approach (trend and duration)       # x
 
 # hyperparameters #                                                                                         # x
@@ -55,9 +55,9 @@ def objective(trial):
     lr=trial.suggest_float('lr', 0.0001, 0.05)
     seq_length=trial.suggest_int('seq_len', 6, 10)
     dropout=trial.suggest_float('dropout', 0, 0.5)
-    training_epochs=400
+    training_epochs=200
     # TCN only ↓
-    kernel_size=trial.suggest_int('kernel', 1, 4)
+    kernel_size=trial.suggest_int('kernel', 2, 4)
     
     seq_length = max(seq_length, kernel_size*2-1)
     inputs, outputs = preprocess(dataset[0], dataset[1], dataset[2], seq_length, component, trenet=False)
@@ -73,13 +73,16 @@ def objective(trial):
         #return LSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
         #return BiLSTM(max(1,component), 2, hidden_size, 1, dropout).to(dev)
         #return TreNet(max(1,component), 2, hidden_size, 1, dropout, seq_length).to(dev)
-    return train_and_test(create_DNN, inputs, outputs, lr, 64, seq_length, training_epochs, component, k, train_ratio, validation=True)[0] # train and test it
-
+    try:
+        return train_and_test(create_DNN, inputs, outputs, lr, 64, seq_length, training_epochs, component, k, train_ratio, validation=True)[0] # train and test it
+    except:
+        print("Model crashed, continuing")
+        return 9999999999
 import time
 start_Time = time.time()
 study = optuna.create_study()
 study.optimize(objective, n_trials=50)
-output = open('optuna_results.txt', 'w')
+output = open('optuna_results_BiLSTM_HPC.txt', 'w')
 output.write(str(study.best_params))
 os.remove("temp.pt")
 print("Time taken: ", time.time() - start_Time)

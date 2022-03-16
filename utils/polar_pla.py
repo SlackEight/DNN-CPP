@@ -1,3 +1,4 @@
+from audioop import avg
 from time import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -162,10 +163,26 @@ def preprocess(file_name, filter_size, pls_max_error, seq_length, component, tre
 
     #for x in range(len(time_series)-index-5000):
     max_len = 0
+    avg_len = []
+    avg_slope = []
+    avg_slope_magnitude = []
     for t in finished_pla:
         if (t[2]-t[0]) > max_len:
             max_len = t[2]-t[0]
+        avg_len.append(t[2]-t[0])
+        slope = math.degrees(math.atan((t[3]-t[1])/(t[2]-t[0])))
+        avg_slope.append(slope)
+        avg_slope_magnitude.append(abs(slope))
+    import statistics    
     print("Longest trend line length: " + str(max_len))
+    print("Average trend line length: " + str(sum(avg_len)/len(avg_len)))
+    print("std dev: " + str(statistics.stdev(avg_len)))
+    print("Average trend line slope: " + str(sum(avg_slope)/len(avg_slope)))
+    print("std dev: " + str(statistics.stdev(avg_slope)))
+    
+    print("Average trend line slope magnitude: " + str(sum(avg_slope_magnitude)/len(avg_slope_magnitude)))
+    print("std dev: " + str(statistics.stdev(avg_slope_magnitude)))
+
 
     yuh = sliding_window_online(time_series[index], pls_max_error)
     index += 1

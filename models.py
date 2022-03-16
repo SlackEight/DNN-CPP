@@ -3,6 +3,11 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 #Chesney's models
+if torch.cuda.is_available():  
+    dev = torch.device("cuda:0")
+    torch.set_default_tensor_type('torch.cuda.FloatTensor')
+else:
+    dev = torch.device("cpu")
 
 class RNN(nn.Module):
     def __init__(self, output_size, input_size, hidden_size, num_layers, dropout):
@@ -62,11 +67,11 @@ class LSTM(nn.Module):
             m.bias.data.fill_(0.01)
 
     def forward(self, x):
-        h_0 = Variable(torch.zeros(
-            self.num_layers, x.size(0), self.hidden_size))
-        c_0 = Variable(torch.zeros(
-            self.num_layers, x.size(0), self.hidden_size))
-        output, (hidden, _) = self.LSTM(x, (h_0.detach(), c_0.detach()))
+        h_0 = torch.zeros(
+            self.num_layers, x.size(0), self.hidden_size).to(dev)
+        c_0 = torch.zeros(
+            self.num_layers, x.size(0), self.hidden_size).to(dev)
+        output, (hidden, _) = self.LSTM(x, (h_0, c_0))
         out = output[:, -1, :]
         #out = hidden[-1]
         out = self.dropout(out)
@@ -99,11 +104,11 @@ class BiLSTM(nn.Module):
             m.bias.data.fill_(0.01)
 
     def forward(self, x):
-        h_0 = Variable(torch.zeros(
-            self.num_layers * 2, x.size(0), self.hidden_size))
-        c_0 = Variable(torch.zeros(
-            self.num_layers * 2, x.size(0), self.hidden_size))
-        output, (hidden, _) = self.LSTM(x, (h_0.detach(), c_0.detach()))
+        h_0 = torch.zeros(
+            self.num_layers * 2, x.size(0), self.hidden_size)
+        c_0 = torch.zeros(
+            self.num_layers * 2, x.size(0), self.hidden_size)
+        output, (hidden, _) = self.LSTM(x, (h_0, c_0))
         out = output[:, -1, :]
         out = self.dropout(out)
 
@@ -198,12 +203,12 @@ class TreNet(nn.Module):
         )
         
         self.main = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=8, kernel_size=3),
+            nn.Conv1d(in_channels=1, out_channels=8, kernel_size=2),
             nn.ReLU(inplace=True),
-            nn.Conv1d(in_channels=8, out_channels=8, kernel_size=3),
+            nn.Conv1d(in_channels=8, out_channels=8, kernel_size=2),
             nn.Flatten(),
             nn.Dropout(dropout, inplace=False),
-            nn.Linear(8*(3-1), hidden_size)
+            nn.Linear(8*(seq_len-2*2+2), hidden_size)
         )
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden_size, num_classes)
@@ -218,15 +223,15 @@ class TreNet(nn.Module):
 
     def forward(self, x):
         
-        x_trends = torch.narrow(x, 1, 0, self.seq_len)
-        x_points = torch.narrow(x, 1, self.seq_len, self.seq_len)
-        x_points = torch.narrow(x_points, 2, 0, 1)
-        x_points = torch.swapaxes(x_points, 1, 2)
-        h_0 = Variable(torch.zeros(
-            self.num_layers, x_trends.size(0), self.hidden_size))
-        c_0 = Variable(torch.zeros(
-            self.num_layers, x_trends.size(0), self.hidden_size))
-        output, (hidden, _) = self.LSTM(x_trends, (h_0.detach(), c_0.detach()))
+        x_trends = torch.narrow(x, 1, 0, self.seq_len).to(dev)
+        x_points = torch.narrow(x, 1, self.seq_len, self.seq_len).to(dev)
+        x_points = torch.narrow(x_points, 2, 0, 1).to(dev)
+        x_points = torch.swapaxes(x_points, 1, 2).to(dev)
+        h_0 = torch.zeros(
+            self.num_layers, x_trends.size(0), self.hidden_size).to(dev)
+        c_0 = torch.zeros(
+            self.num_layers, x_trends.size(0), self.hidden_size).to(dev)
+        output, (hidden, _) = self.LSTM(x_trends, (h_0, c_0))
         out = output[:, -1, :]
         #out = hidden[-1]
         out = self.dropout(out)
